@@ -1,0 +1,102 @@
+// schema.prisma
+
+generator client {
+    provider = "prisma-client-js"
+  }
+  
+  datasource db {
+    provider = "postgresql" // or mysql, sqlite etc.
+    url      = env("DATABASE_URL")
+  }
+  
+  model User {
+    id        Int       @id @default(autoincrement())
+    name      String
+    email     String    @unique
+    password  String
+    apiKeys   ApiKey[]
+    reviews   Review[]
+    orders    Order[]
+    cartItems CartItem[]
+    createdAt DateTime  @default(now())
+  }
+  
+  model ApiKey {
+    id        Int      @id @default(autoincrement())
+    key       String   @unique
+    user      User     @relation(fields: [userId], references: [id])
+    userId    Int
+    revoked   Boolean  @default(false)
+    createdAt DateTime @default(now())
+  }
+  
+  model Book {
+    id          Int         @id @default(autoincrement())
+    title       String
+    author      String
+    description String?
+    price       Decimal
+    stock       Int         @default(0)
+    isbn        String?     @unique
+    publishedAt DateTime?
+    reviews     Review[]
+    cartItems   CartItem[]
+    orderItems  OrderItem[]
+    createdAt   DateTime    @default(now())
+  }
+  
+  model Review {
+    id        Int      @id @default(autoincrement())
+    rating    Int
+    comment   String?
+    user      User     @relation(fields: [userId], references: [id])
+    userId    Int
+    book      Book     @relation(fields: [bookId], references: [id])
+    bookId    Int
+    createdAt DateTime @default(now())
+  
+    @@unique([userId, bookId]) // One review per user per book
+  }
+  
+  model Order {
+    id         Int          @id @default(autoincrement())
+    user       User         @relation(fields: [userId], references: [id])
+    userId     Int
+    total      Decimal
+    status     String       @default("pending") // You can use enum instead
+    orderItems OrderItem[]
+    payment    Payment?
+    createdAt  DateTime     @default(now())
+  }
+  
+  model OrderItem {
+    id        Int      @id @default(autoincrement())
+    order     Order    @relation(fields: [orderId], references: [id])
+    orderId   Int
+    book      Book     @relation(fields: [bookId], references: [id])
+    bookId    Int
+    quantity  Int
+    unitPrice Decimal
+  }
+  
+  model CartItem {
+    id       Int     @id @default(autoincrement())
+    user     User    @relation(fields: [userId], references: [id])
+    userId   Int
+    book     Book    @relation(fields: [bookId], references: [id])
+    bookId   Int
+    quantity Int     @default(1)
+  
+    @@unique([userId, bookId]) // One book per user in cart
+  }
+  
+  model Payment {
+    id             Int      @id @default(autoincrement())
+    order          Order    @relation(fields: [orderId], references: [id])
+    orderId        Int
+    paymentMethod  String?
+    paymentStatus  String   // e.g. 'success', 'failed', 'pending'
+    transactionId  String?  @unique
+    paidAt         DateTime?
+  }
+  

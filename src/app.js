@@ -1,0 +1,23 @@
+import express from "express"
+import dotenv from "dotenv"
+import cookieParser from "cookie-parser";
+import healthCheckRouter from "./routes/healthcheck.route.js"
+import { PrismaClient } from "@prisma/client";
+
+dotenv.config(); 
+
+const app = express();
+
+// export const db = new PrismaClient();
+
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
+
+
+//cors
+
+app.use("/api/v1",healthCheckRouter);
+
+export default app;
+
