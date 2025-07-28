@@ -16,7 +16,6 @@ datasource db {
 
 enum UserRole {
   USER
-  SELLER
   ADMIN
 }
 
@@ -51,7 +50,6 @@ model User {
 
   review Review[]
   order  Order[]
-  book   Book[]
 }
 
 model Book {
@@ -62,13 +60,10 @@ model Book {
   price       Decimal
   stock       Int
   publishedAt DateTime?
-  sellerId    String
   category    String[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  seller User @relation(fields: [sellerId], references: [id], onDelete: Cascade)
 
   review    Review[]
   orderItem OrderItem[]
