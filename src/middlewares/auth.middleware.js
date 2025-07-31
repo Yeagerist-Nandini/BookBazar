@@ -1,10 +1,15 @@
 import {ApiError} from '../utils/api-error.js'
 import { db } from '../utils/db.js';
+import jwt from "jsonwebtoken";
 
 export const isLoggedIn = (req, res, next) => {
     try {
-        
-        req.user = payload;
+        const accessToken = req.cookies?.accessToken;
+
+        if(!accessToken) throw new ApiError(401, "Authentication Failed!!");
+
+        const payload = jwt.verify(accessToken, process.env.ACCESS_TOKEN_REQUEST);
+        req.user = payload; 
 
         next();
     } catch (error) {
