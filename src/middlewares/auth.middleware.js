@@ -20,14 +20,9 @@ export const isLoggedIn = (req, res, next) => {
 
 export const isAdmin = async(req, res, next) => {
     try {
-        const { id } = req.user;
+        const { id, role } = req.user;
 
-        const user = await db.user.findUnique({
-            where: {id},
-            select: {role: true}
-        });
-
-        if(!user || user.role!=="ADMIN"){
+        if(user.role!=="ADMIN"){
             throw next(new ApiError(401, "You are not authorized"));
         }
         

@@ -10,8 +10,8 @@ import { db } from "../utils/db.js";
 import { ApiResponse } from "../utils/api-response.js";
 
 
-//TODO: write validators for it 
-//write middlewares for it 
+//TODO: write validators for it  
+
 export const createBook = asyncHandler(async(req, res) => {
     const {
         title,
@@ -31,8 +31,7 @@ export const createBook = asyncHandler(async(req, res) => {
             price,
             stock,
             publishedAt,
-            category,
-            sellerId: req.user.id,
+            category
         }
     });
 
@@ -53,30 +52,129 @@ export const getBookById = asyncHandler( async(req, res) => {
     return res.status(200).json(new ApiResponse(200, book, "Book details fetched successfully!"));
 })
 
+
+// curosr pagination & filtering
 export const getBooks = asyncHandler( async(req, res) => {
-    //indexing and paging
+    let {
+        limit = 10, 
+        cursor, // last book id from previous page
+        search,
+        categoryId,
+        minPrice = 0,
+        maxPrice, 
+        sortBy = "createdAt", // or price, publishedAt
+        sortOrder = "desc"
+    } = req.query;
+
+    limit = Number(limit);
+
+    const filters = {
+        ...(search && {
+            OR: [
+                {title: {contains: search, mode: "insensitive"}},
+                {author: {contains: search, mode: "insensitive"}}
+            ]
+        }),
+        ...(category && {
+            category: {some: {id: categoryId}}
+        }),
+        ...(minPrice && {price: {gte: Number(minPrice)}}),
+        ...(maxPrice && {price: {lte: Number(maxPrice)}})
+    };
+
+    const paginationOptions = cursor ? {
+        skip: 1,
+        cursor: {id: cursor}
+    }: {};
+
+    const books = await db.book.findMany({
+        where: filters,
+        take: limit,
+        orderBy: {[sortBy]: sortOrder},
+        ...paginationOptions,
+        include: {
+            category: true,
+            review: true
+        },
+        select: {
+            title: true,
+            price: true,
+            author: true
+        }
+    });
+
+    const nextCursor = books.length === limit ? books[books.length-1].id : null;
+
+    return res
+            .status(200)
+            .json(new ApiResponse(200, {
+                books,
+                nextCursor
+            }, "Books fetched successfully"));
 })
 
 export const updateBook = asyncHandler(async(req, res) => {
+    const { bookId } = req.params;
 
+    const {
+        title,
+        author,
+        description,
+        price,
+        stock,
+        publishedAt,
+        category
+    } = req.body;
+
+    const updated_book = await db.book.update({
+        where: { id: bookId},
+        data: {
+            title,
+            author,
+            description,
+            price,
+            stock,
+            publishedAt,
+            category
+        }
+    });
+
+    if(!updated_book) throw new ApiError(500, "Error while listing this book");
+
+    return res
+            .status(200)
+            .json(new ApiResponse(200, updated_book, "Book updated successfully!")); 
 })
 
 export const deleteBook = asyncHandler(async(req, res) => {
+    const { bookId } = req.params;
 
-})
+    const deletedBook = await db.book.delete({
+        where: { id: bookId }, //only unique fields
+    });
 
-export const getBookByAuthor = asyncHandler(async(req, res) => {
+    if(!deletedBook){
+        throw new ApiError(500, "Error while deleting book");
+    }
 
-})
-
-export const getBookByCategory = asyncHandler(async(req, res) => {
-
-})
-
-export const getBookByPrice = asyncHandler(async(req, res) => {
-
+    return res
+            .status(200)
+            .json(new ApiResponse(200, deletedBook, "Book deleted successfully!")); 
 })
 
 export const getBookbyRatings = asyncHandler(async(req, res) => {
     
 })
+
+
+// Input validation – Use Zod/Joi/Yup for req.body and req.params.
+
+// Relation handling – Use connect for category/author relations.
+
+// Selective fields – Use select for lighter responses in lists.
+
+// Sorting options – Allow sorting by price, date, popularity.
+
+// Caching – Use Redis for frequently accessed book lists.
+
+// Logging – Log errors and DB operations for debugging.

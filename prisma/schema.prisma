@@ -60,13 +60,23 @@ model Book {
   price       Decimal
   stock       Int
   publishedAt DateTime?
-  category    String[]
+  category  Category[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   review    Review[]
   orderItem OrderItem[]
+}
+
+model Category{
+  id String @id @default(uuid())
+  name String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  books Book[]
 }
 
 model Review {
