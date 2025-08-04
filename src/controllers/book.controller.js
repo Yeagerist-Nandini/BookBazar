@@ -178,3 +178,20 @@ export const getBookbyRatings = asyncHandler(async(req, res) => {
 // Caching – Use Redis for frequently accessed book lists.
 
 // Logging – Log errors and DB operations for debugging.
+
+
+
+// Frontend first request:
+
+// pgsql
+// Copy
+// Edit
+// GET /books?limit=10&sortBy=createdAt&sortOrder=desc
+// → Returns 10 newest books + nextCursor = last book’s ID.
+
+// Frontend next page request:
+
+// pgsql
+// Copy
+// Edit
+// GET /books?limit=10&cursor=<lastBookIdFromPreviousPage>

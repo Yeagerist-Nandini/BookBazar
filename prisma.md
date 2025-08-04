@@ -105,7 +105,7 @@ model Book {
   id          Int      @id @default(autoincrement())
   title       String
   categoryId  Int
-  
+
   category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 }
 
