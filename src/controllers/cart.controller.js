@@ -4,88 +4,20 @@ import { ApiError } from "../utils/api-error";
 import { ApiResponse } from "../utils/api-response";
 import { asyncHandler } from "../utils/asyncHandler";
 import { db } from "../utils/db";
+import * as cartService from '../services/cart.service.js'
 
 
-const updateOrderTotalAmount =  async(orderId) => {
-    const items = await db.orderItem.findMany({
-        where: {orderId}
-    });
-
-    const totalAmount  = items.reduce((sum, item) => (
-        sum + item.unit_price * item.quantity
-    ),0)
-
-    const order = await db.order.update({
-        where: { id: orderId},
-        data: {totalAmount}
-    });
-
-    if(!order) throw new ApiError(500, "error while updating total amount")
-}
-
-const addItem = asyncHandler( async(req, res) => {
+export const addItem = asyncHandler( async(req, res) => {
     const userId = req.user.id
-    const { bookId, quantity, unit_price } = req.body;
+    const { bookId, quantity } = req.body;
 
-    //check if there is an order
-    let order = await db.order.findFirst({
-        where: { 
-            userId,
-            status: "PENDING"
-        }
-    });
+    if(quantity == 0) delete cartItem;
 
-    if(!order){
-        order = await db.order.create({
-            data:{
-                userId,
-                totalAmount: 0,
-                status: "PENDING"     
-            }
-        })
-
-        if(!order) throw new ApiError(500, "Error while creating order")
-    }
-
-    //check if orderItem is already there
-    let orderItem = await db.orderItem.findFirst({
-        where: {
-            orderId: order.id,
-            bookId
-        }
-    });
-
-    if(!orderItem){
-        orderItem = await db.orderItem.create({
-            data: {
-                orderId: order.id,
-                bookId,
-                quantity,
-                unit_price
-            }
-        })
-    }
-    else{
-        const new_quantity = orderItem.quantity + quantity;
-        orderItem = await db.orderItem.update({
-            where : {
-                orderId: order.id,
-                bookId,
-            },
-            data:{
-                quantity: new_quantity,
-                unit_price
-            }
-        });
-    }
-
-    if(!orderItem) throw new ApiError(500, "Error while adding item to cart");
-    
-    await updateOrderTotalAmount(order.id)
+    const latest_cart = await cartService.addItemToCart(userId, cart.cartId, bookId, quantity);
 
     return res
            .status(200)
-           .json(new ApiResponse(200, order, "Added Item to cart successfully!"))
+           .json(new ApiResponse(200, latest_cart, "Added Item to cart successfully!"))
 })
 
 const deleteItem = asyncHandler( async(req, res) => {
