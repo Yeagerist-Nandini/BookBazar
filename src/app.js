@@ -2,7 +2,6 @@ import express from "express"
 import dotenv from "dotenv"
 import cookieParser from "cookie-parser";
 import healthCheckRouter from "./routes/healthcheck.route.js"
-import { PrismaClient } from "@prisma/client";
 
 dotenv.config(); 
 
