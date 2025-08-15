@@ -1,11 +1,10 @@
-import { error } from "console";
 import { createClient } from "redis"
 
 let client = null;
 
-const redisClient = async() => {
-    if(!client){
-        client = createClient({url: process.env.REDIS_URL});
+const redisClient = async () => {
+    if (!client) {
+        client = createClient({ url: process.env.REDIS_URL });
 
         client.on("error", (error) => {
             console.error(error);
@@ -23,30 +22,42 @@ const redisClient = async() => {
 
 
 // publisher client 
-export const redisPub = async() => {
-    const client = createClient({url: process.env.REDIS_URL});
+let pubClient = null;
+export const redisPub = async () => {
+    if (!pubClient) {
+        pubClient = createClient({ url: process.env.REDIS_URL });
 
-    client.on("connect", () => {
-        console.log("Redis Pub connected");
-    });
+        pubClient.on("connect", () => {
+            console.log("Redis Pub connected");
+        });
 
-    client.on("error", (error) => {
-        console.error('Redis pub error', error);
-    })
+        pubClient.on("error", (error) => {
+            console.error('Redis pub error', error);
+        })
+
+        await pubClient.connect();
+    }
+    return pubClient;
 }
 
 
 // subscriber client 
-export const rediSub = async() => {
-    const client = createClient({url: process.env.REDIS_URL});
+let subClient = null;
+export const redisSub = async () => {
+    if (!subClient) {
+        subClient = createClient({ url: process.env.REDIS_URL });
 
-    client.on("connect", () => {
-        console.log("Redis Sub connected");
-    });
+        subClient.on("connect", () => {
+            console.log("Redis Sub connected");
+        });
 
-    client.on("error", (error) => {
-        console.error('Redis Sub error', error);
-    })
+        subClient.on("error", (error) => {
+            console.error('Redis Sub error', error);
+        })
+
+        await subClient.connect();
+    }
+    return subClient;
 }
 
 export default redisClient;

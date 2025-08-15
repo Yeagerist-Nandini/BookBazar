@@ -6,6 +6,36 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { db } from "../utils/db";
 
 
+// const updateTotalAmount =  async(userId, cartId) => {
+//     const cart_total_prefix = `${CART_TOTAL_PREFIX}${userId}`;
+//     let totalAmount = await redisClient.get(cart_total_prefix);
+
+//     if(totalAmount) return parseFloat(totalAmount);
+
+//     ///if not in cache
+//     const items = await db.cartItem.findMany({
+//         where: {cartId},
+//         include: { book: true }
+//     });
+
+//     totalAmount  = items.reduce((sum, item) => (
+//         sum + (item.book.unit_price * item.quantity)
+//     ),0)
+
+//     // Store with TTL (5 min)
+//     await redisClient.setEx(cart_total_prefix, 300, totalAmount.toString());
+
+//     const cart = await db.cart.update({
+//         where: { id: cartId},
+//         data: {totalAmount}
+//     });
+
+//     if(!cart) throw new ApiError(500, "error while updating total amount")
+
+//     return cart;
+// }
+
+
 const updateOrderTotalAmount =  async(orderId) => {
     const items = await db.orderItem.findMany({
         where: {orderId}

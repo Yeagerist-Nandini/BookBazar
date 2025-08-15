@@ -8,6 +8,7 @@ import dotenv from "dotenv";
 import { ApiError } from "../utils/api-error.js";
 import  jwt  from "jsonwebtoken";
 import cookieParser from "cookie-parser";
+import { redisPub, redisSub } from "../utils/redisClient.js";
 
 dotenv.config();
 
@@ -29,12 +30,20 @@ export const createSocketServer = async({port}) => {
     });
 
     //3. create two redis clients for adapter/ Redis adapter for multi-instance scaling
-    const pubClient = createClient({ url: process.env.REDIS_URL });
-    const subClient = createClient({ url: process.env.REDIS_URL });
-    await pubClient.connect();
-    await subClient.connect();
+    const pubClient = await redisPub();
+    const subClient = await redisSub();
     io.adapter(createAdapter(pubClient, subClient));
 
+    // 🔹 Subscribe to cart updates after subscriber connects
+    await subClient.pSubscribe("cart:update:user:*", (message, channel) => {
+        const userId = channel.split(":")[3];
+        const updatedCart = JSON.parse(message);
+
+        // emit to all sockets in that user's room
+        io.to(`user:${userId}`).emit("cart:update", updatedCart);
+    })
+
+    
     //4. Auth + join per-user rooms
     io.use((socket, next) => {
         cookieParser()(socket.request, {}, (err)=> {
