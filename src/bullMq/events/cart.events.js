@@ -11,8 +11,8 @@ events.on("failed", async({jobId, failedReason, prev}) => {
     console.error(`[cartQueue] Job ${jobId} failed: ${failedReason}`);
 })
 
-events.on("completed", async ({jobId}) => {
-    console.log(`[cartQueue] Job ${jobId} completed`);
+events.on("completed", async ({jobId, returnvalue}) => {
+    console.log(`[cartQueue] Job ${jobId} completed with : ${returnvalue}`);
 })
 
 events.on("stalled", async ({jobId}) => {

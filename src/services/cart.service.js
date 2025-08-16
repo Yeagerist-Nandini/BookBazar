@@ -4,6 +4,7 @@ import { db } from "../utils/db";
 import redisClient, { redisPub } from '../utils/redisClient.js'
 import fs from "fs";
 import { getIO } from "./socketServer.js";
+import { cartQueue } from "../bullMq/queues/cart.queue.js";
 
 const CART_PREFIX = "cart:user:";
 const CART_TOTAL_PREFIX = "cartTotal:user:";
@@ -71,11 +72,35 @@ export const addItemToCart = async (userId, bookId, quantity) => {
         }
         await redisPub.publish(pubChannel, JSON.stringify(pubPayload));
 
-        // optionally emit directly to THIS connection for faster response (use socket.io room)
+        //4. optionally emit directly to THIS connection for faster response (use socket.io room)
         const io = getIO();
         io.to(`user:${userId}`).emit('cart:update', pubPayload);
 
-        // push cart persist job in queue
+
+        //5. push cart persist job in queue
+        const data = {
+            userId,
+            bookId,
+            quantity
+        }
+
+        const jobOptions = {
+            jobId: `persistCart:${userId}:`,
+            attempts: 10,
+            backoff: { type: "exponential", delay: 1000 },
+            priority: 1,              // critical
+            removeOnComplete: { age: 2 * 60 * 60, count: 5000 },
+            removeOnFail: { age: 24 * 60 * 60 },
+            // optional delay if you want burst-collapsing:
+            // delay: 150, // small debounce to collapse rapid edits
+            // timeout: 45_000,
+        }
+
+        await cartQueue.add(
+            "persistCart",
+            data,
+            jobOptions
+        )
 
     } catch (error) {
         console.error(error);
