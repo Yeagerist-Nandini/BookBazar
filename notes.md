@@ -8,8 +8,44 @@
 
 - book got out of stock ?
 
-- sync DB cart to redis cart every day 
-- using MQs or cron jobs ?
+-  ?
+
+
+
+# Target end of Sept
+----------------------------------------------------------------------------
+## get total amount 
+- get redis '$.totalAmount' by doing getTotalAmount()
+- update it in 5. mq job and update it in DB cart 
+
+## get cart 
+- get it from redis
+- **redis cart will always be there coz it's primary db for cart**
+
+## remove item from cart 
+- check if book exists ?
+- delete it from redis
+- get redis '$.totalAmount' by doing getTotalAmount()
+- update user via ws and pub/sub
+- update DB via mqs
+
+## clear cart
+- delete redis cart for that user 
+- update via ws and pub sub 
+- delete all cartItems and reset cart (or delete) 
+
+## sync DB cart to redis cart every day using MQs and cron jobs
+## handling DEAD LETTER QUEUES
+
+## only implement cart for now 
+## then implement books and user auth 
+
+
+## then build frontend for this(hehe)
+------------------------------------------------------
+
+## then implement orders 
+## then implement checkouts 
 
 
 
