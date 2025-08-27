@@ -5,7 +5,6 @@ import redisClient, { redisPub } from '../utils/redisClient.js'
 import fs from "fs";
 import { getIO } from "./socketServer.js";
 import { cartQueue } from "../bullMq/queues/cart.queue.js";
-import { delay } from "bullmq";
 
 const CART_PREFIX = "cart:user:";
 
@@ -240,9 +239,6 @@ export const clearCart = async (userId) => {
 }
 
 
-////////////////////////////////////////check what to return in all controllers 
+//check what to return in all controllers 
 // If it’s the first time the user has ever tried to view their cart, Redis simply won’t have any key like cart:items:user:{userId}.
 
-
-
-//Product removed from DB since last cart load → delete it from cart.
