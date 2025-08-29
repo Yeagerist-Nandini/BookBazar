@@ -1,3 +1,3 @@
 export const CART_QUEUE = "cartQueue";
 
-export const CART_DLQ = "cartQueue:dlq";
+export const CART_DLQ = "cartQueueDlq";

@@ -1,7 +1,7 @@
 import { Worker } from "bullmq";
-import { CART_QUEUE } from "../constants.js/cart.constant";
+import { CART_QUEUE } from "../constants/cart.constant.js";
 import { bullConnection } from "../bullmq.js"
-import { persistCartAdd, persistCartClear, persistCartRemove } from "../jobs/cart.jobs";
+import { persistCartAdd, persistCartClear, persistCartRemove } from "../jobs/cart.jobs.js";
 import { cartDLQ } from "../queues/cart.dlq.queue.js";
 
 

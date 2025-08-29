@@ -20,7 +20,7 @@ const getCartVersion = async (userId) => {
 }
 
 
-const fullCartSync = async (userId, version) => {
+const fullCartSync = async (userId, dbVersion) => {
     const cart_key = `cart:user:${userId}`;
     const redisCart = await redisClient.json.get(cart_key, "$");
 
@@ -35,11 +35,11 @@ const fullCartSync = async (userId, version) => {
                 }),
                 db.cart.update({
                     where: { id: cart.id },
-                    data: { version }
+                    data: { version: dbVersion }
                 })
             ]);
         }
-        console.log(`[fullCartSync] Cleared DB cart for user ${userId} -> v${version}`);
+        console.log(`[fullCartSync] Cleared DB cart for user ${userId} -> v${dbVersion}`);
         return;
     }
     

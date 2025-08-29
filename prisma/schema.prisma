@@ -128,7 +128,6 @@ model Cart {
   id     String @id @default(uuid())
   userId String @unique
   version Int @default(0)
-  totalAmount Decimal @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

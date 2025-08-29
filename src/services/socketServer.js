@@ -1,9 +1,8 @@
-import express from "express";
 import http from 'http';
 import { Server } from 'socket.io';
 import { createClient } from "redis";
 import { createAdapter } from "@socket.io/redis-adapter";
-import app from './app.js';
+import app from '../app.js';
 import dotenv from "dotenv";
 import { ApiError } from "../utils/api-error.js";
 import  jwt  from "jsonwebtoken";

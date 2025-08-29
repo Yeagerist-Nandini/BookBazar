@@ -1,7 +1,7 @@
 //dead letter queue 
 import { Queue } from "bullmq";
-import { bullConnection } from "../bullmq";
-import { CART_DLQ } from "../constants.js/cart.constant";
+import { bullConnection } from "../bullmq.js";
+import { CART_DLQ } from "../constants/cart.constant.js";
 
 
 

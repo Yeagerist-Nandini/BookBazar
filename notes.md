@@ -50,7 +50,39 @@
 
 
 
-
+prisma => schema.prisma
+src
+   bullmq
+        constants.js
+        events
+              cart.events.js
+        jobs
+            cart.jobs.js
+        queues
+            cart.queue.js
+            cart.dlq.queue.js
+        workers
+            cart.dlq.worker.js
+            cart.worker.js
+    controllers
+        auth.controller.js
+        book.controller.js
+        cart.controller.js
+    lua (lua scripts)
+    middlewares
+        auth.middleware.js
+    routes (for routes)
+    services
+       cart.service.js
+       sockerServer.js
+    utils
+       mail.js
+       api-error.js
+       api-response.js
+       db.js
+       redisClient.js
+    app.js
+    index.js
 
 
 
