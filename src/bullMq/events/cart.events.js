@@ -1,6 +1,6 @@
 import { QueueEvents } from "bullmq";
-import { CART_QUEUE } from "../queues/cart.queue";
-import { bullConnection } from "../bullmq";
+import { CART_QUEUE } from "../queues/cart.queue.js";
+import { bullConnection } from "../bullmq.js";
 
 const events = new QueueEvents(CART_QUEUE, {
     connection: bullConnection

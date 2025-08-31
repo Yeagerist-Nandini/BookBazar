@@ -1,6 +1,6 @@
 // Implement: Add to cart, update quantity, remove item
-import { ApiError } from "../utils/api-error";
-import { db } from "../utils/db";
+import { ApiError } from "../utils/api-error.js";
+import { db } from "../utils/db.js";
 import redisClient, { redisPub } from '../utils/redisClient.js'
 import fs from "fs";
 import { getIO } from "./socketServer.js";
@@ -44,20 +44,28 @@ export const addItemToCart = async (userId, bookId, quantity) => {
 
         quantity = getValidQuantity(book, quantity);
 
+        console.log('-----------got books');
+
         //2. upsert cart in redis
+        const redis_client = await redisClient();
+
         const cart_key = `${CART_PREFIX}${userId}`;
         const ts = Date.now().toString();
 
-        await redisClient.eval(luaAddItem, {
+        const result = await redis_client.eval(luaAddItem, {
             keys: [cart_key],
             arguments: [
                 bookId,
-                quantity,
-                book.price,
+                quantity.toString(),
+                book.price.toString(),
                 book.title,
                 ts
             ]
         });
+
+        if(result !== "UPDATED") throw new ApiError(500, "error while adding item in cart")
+          
+        console.log('-----------added item in redis');
 
 
         //3. publish cart updates to Redis pub/sub channel for this user
@@ -71,11 +79,17 @@ export const addItemToCart = async (userId, bookId, quantity) => {
             title: book.title,
             updatedAt: ts
         }
-        await redisPub.publish(pubChannel, JSON.stringify(pubPayload));
+
+        const pubClient = await redisPub();
+        await pubClient.publish(pubChannel, JSON.stringify(pubPayload));
+
+        console.log('-----------add item redis pub sub');
 
         //4. optionally emit directly to THIS connection for faster response (use socket.io room)
         const io = getIO();
         io.to(`user:${userId}`).emit('cart:update', pubPayload);
+
+        console.log('-----------add item redis pub sub io');
 
 
         //5. push cart persist job in queue
@@ -87,7 +101,6 @@ export const addItemToCart = async (userId, bookId, quantity) => {
         }
 
         const jobOptions = {
-            jobId: `persistCart:${userId}:`,
             attempts: 10,
             backoff: { type: "exponential", delay: 1000 },
             priority: 1,              // critical
@@ -104,6 +117,9 @@ export const addItemToCart = async (userId, bookId, quantity) => {
             jobOptions
         )
 
+        console.log('-----------pushed add item job in queue');
+
+        return pubPayload;
     } catch (error) {
         console.error(error);
     }
@@ -177,6 +193,8 @@ export const removeCartItem = async (userId, bookId) => {
             data,
             jobOptions
         )
+
+        return pubPayload
     } catch (error) {
         console.error(error);
     }
@@ -233,6 +251,8 @@ export const clearCart = async (userId) => {
             data,
             jobOptions
         );
+
+        return pubPayload
     } catch (error) {
         console.error(error);
     }

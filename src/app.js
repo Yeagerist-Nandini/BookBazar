@@ -2,6 +2,7 @@ import express from "express"
 import dotenv from "dotenv"
 import cookieParser from "cookie-parser";
 import healthCheckRouter from "./routes/healthcheck.route.js"
+import cartRouter from "./routes/cart.route.js";
 
 dotenv.config(); 
 
@@ -17,6 +18,7 @@ app.use(express.urlencoded({extended: true}));
 //cors
 
 app.use("/api/v1",healthCheckRouter);
+app.use("/api/v1", cartRouter);
 
 export default app;
 

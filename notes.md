@@ -48,42 +48,17 @@
 ## then implement checkouts 
 
 
+redis json.get returns "[]"
+Bulk string reply: a JSON-encoded string representing the value(s) at the specified path(s).
+redis.exists return 0 or 1
 
 
-prisma => schema.prisma
-src
-   bullmq
-        constants.js
-        events
-              cart.events.js
-        jobs
-            cart.jobs.js
-        queues
-            cart.queue.js
-            cart.dlq.queue.js
-        workers
-            cart.dlq.worker.js
-            cart.worker.js
-    controllers
-        auth.controller.js
-        book.controller.js
-        cart.controller.js
-    lua (lua scripts)
-    middlewares
-        auth.middleware.js
-    routes (for routes)
-    services
-       cart.service.js
-       sockerServer.js
-    utils
-       mail.js
-       api-error.js
-       api-response.js
-       db.js
-       redisClient.js
-    app.js
-    index.js
+socketServer.js line 51
+cart controller userId
 
+after updating cart => manage book stock 
+price in cartItem too.
+loading lua scripts properly
 
 
 

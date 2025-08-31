@@ -1,13 +1,14 @@
-import { ApiResponse } from "../utils/api-response";
-import { asyncHandler } from "../utils/asyncHandler";
+import { ApiResponse } from "../utils/api-response.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 import * as cartService from '../services/cart.service.js'
 
 
 export const addToCart  = asyncHandler( async(req, res) => {
-    const userId = req.user.id
+    const userId = '1e9d71c0-5e4e-4f50-87fe-7dd8b9307024' //req.user.id
+    // const userId = req.user.id;
     const { bookId, quantity } = req.body;
 
-    const latest_cart = await cartService.addItemToCart(userId, cart.cartId, bookId, quantity);
+    const latest_cart = await cartService.addItemToCart(userId, bookId, quantity);
 
     return res
            .status(200)

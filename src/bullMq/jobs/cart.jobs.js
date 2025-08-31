@@ -14,15 +14,25 @@ import { ApiError } from "../../utils/api-error.js";
 const getCartVersion = async (userId) => {
     const cart_key = `cart:user:${userId}`;
 
-    const version = await redisClient.json.get(cart_key, "$.version");
+    const client = await redisClient();
+    let version = await client.json.get(cart_key, { path: "$.version" });
 
-    return version;
+    if(Array.isArray(version)) version = version[0];
+
+    if(!version) return 0;
+    console.log(version);
+
+    return Number(version);
 }
 
 
 const fullCartSync = async (userId, dbVersion) => {
     const cart_key = `cart:user:${userId}`;
-    const redisCart = await redisClient.json.get(cart_key, "$");
+
+    const client = await redisClient();
+    const redisCart = await client.json.get(cart_key, { path: "$" });
+
+    console.log(redisCart);
 
     // if no item in redis cart
     if (!redisCart || redisCart.length === 0) {
@@ -91,15 +101,17 @@ export const persistCartAdd = async ({ userId, bookId, quantity }) => {
         return;
     }
 
+    console.log(cart.version, redisVersion)
+
     if (cart.version !== redisVersion - 1) {
         // Out of sync → full sync
         await fullCartSync(userId, redisVersion);
         return
     }
 
-    const cartItem = await db.upsert({
+    const cartItem = await db.cartItem.upsert({
         where: { cartId_bookId: { cartId: cart.id, bookId } },
-        update: { quantity: book.quantity },
+        update: { quantity: quantity },
         create: {
             cartId: cart.id,
             bookId,
