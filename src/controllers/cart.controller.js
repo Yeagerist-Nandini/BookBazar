@@ -16,7 +16,8 @@ export const addToCart  = asyncHandler( async(req, res) => {
 })
 
 export const removeFromCart = asyncHandler( async(req, res) => {
-    const userId = req.user.id
+    const userId = '1e9d71c0-5e4e-4f50-87fe-7dd8b9307024' //req.user.id
+    // const userId = req.user.id;
     const { bookId } = req.body;
 
     const cart = await cartService.removeCartItem(userId, bookId);
@@ -27,7 +28,8 @@ export const removeFromCart = asyncHandler( async(req, res) => {
 })
 
 export const getCart = asyncHandler( async(req, res) => {
-    const userId = req.user.id
+    const userId = '1e9d71c0-5e4e-4f50-87fe-7dd8b9307024' //req.user.id
+    // const userId = req.user.id;
 
     const cart = await cartService.getCart(userId);
    
@@ -37,7 +39,8 @@ export const getCart = asyncHandler( async(req, res) => {
 })
 
 export const clearCart = asyncHandler( async(req, res) => {
-    const userId = req.user.id;
+    const userId = '1e9d71c0-5e4e-4f50-87fe-7dd8b9307024' //req.user.id
+    // const userId = req.user.id;
 
     await cartService.clearCart(userId);
 

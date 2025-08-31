@@ -2,13 +2,14 @@
 -- ARGV[1] = updatedAt (timestamp)
 
 --1. check if cart exists 
-local cart_exists = redis.call("JSON.GET", KEYS[1])
-if not cart_exists then
+local cart_exists = redis.call("EXISTS", KEYS[1])
+
+if cart_exists == 0 then
     return "NO_CART"
 end
 
--- set version to 0
-local current_version = tonumber(redis.call("JSON.GET", KEYS[1], "$.version") or "0")
+-- increment version
+local current_version = cjson.decode(redis.call("JSON.GET", KEYS[1], "$.version"))[1]
 redis.call("JSON.SET", KEYS[1], "$.version", cjson.encode(current_version + 1))
 
 -- set totalAmount to 0

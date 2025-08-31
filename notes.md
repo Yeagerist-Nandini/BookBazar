@@ -53,8 +53,8 @@ Bulk string reply: a JSON-encoded string representing the value(s) at the specif
 redis.exists return 0 or 1
 
 
-socketServer.js line 51
-cart controller userId
+- socketServer.js line 51
+- cart controller userId
 
 after updating cart => manage book stock 
 price in cartItem too.

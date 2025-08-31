@@ -1,7 +1,7 @@
 // Implement: Add to cart, update quantity, remove item
 import { ApiError } from "../utils/api-error.js";
 import { db } from "../utils/db.js";
-import redisClient, { redisPub } from '../utils/redisClient.js'
+import redisClient, { redisPub, redisSub } from '../utils/redisClient.js'
 import fs from "fs";
 import { getIO } from "./socketServer.js";
 import { cartQueue } from "../bullMq/queues/cart.queue.js";
@@ -129,7 +129,8 @@ export const addItemToCart = async (userId, bookId, quantity) => {
 export const getCart = async (userId) => {
     const cart_key = `${CART_PREFIX}${userId}`;
 
-    const cart = await redisClient.json.get(cart_key);
+    const redis_client = await redisClient();
+    const cart = await redis_client.json.get(cart_key);
     console.log(cart);
 
     return cart;
@@ -139,14 +140,17 @@ export const getCart = async (userId) => {
 export const removeCartItem = async (userId, bookId) => {
     try {
         //1. check if book exists
-        const book = await db.findUnique({ where: { id: bookId } });
+        const book = await db.book.findUnique({ where: { id: bookId } });
         if (!book) throw new ApiError(404, "Book not found");
+
+        console.log("-----------got books");
 
         //2. delete it from redis
         const cart_key = `${CART_PREFIX}${userId}`;
         const ts = Date.now().toString();
 
-        const res = await redisClient.eval(luaDeleteItem, {
+        const redis_client = await redisClient();
+        const res = await redis_client.eval(luaDeleteItem, {
             keys: [cart_key],
             arguments: [
                 bookId,
@@ -157,6 +161,8 @@ export const removeCartItem = async (userId, bookId) => {
             throw new ApiError(400, "Invalid request");
         }
 
+        console.log('-----------removed item from redis');
+
         //3. update user via ws and pub/sub
         const pubChannel = `${CART_PUB_CHANNEL_PREFIX}${userId}`;
         const pubPayload = {
@@ -166,11 +172,16 @@ export const removeCartItem = async (userId, bookId) => {
             updatedAt: ts
         };
 
-        await redisPub.publish(pubChannel, JSON.stringify(pubPayload));
+        const pubClient = await redisPub();
+        await pubClient.publish(pubChannel, JSON.stringify(pubPayload));
+
+        console.log('-----------add item redis pub sub');
 
         //4. optionally emit directly to THIS connection for faster response (use socket.io room)
         const io = getIO();
         io.to(`user:${userId}`).emit('cart:update', pubPayload);
+
+        console.log('-----------add item redis pub sub io');
 
         //5. update DB via mqs
         const data = {
@@ -180,7 +191,6 @@ export const removeCartItem = async (userId, bookId) => {
         }
 
         const jobOptions = {
-            jobId: `persistCart:${userId}`,
             attempts: 10,
             backoff: { type: "exponential", delay: 1000 },
             priority: 1,
@@ -193,6 +203,8 @@ export const removeCartItem = async (userId, bookId) => {
             data,
             jobOptions
         )
+
+        console.log('-----------pushed add item job in queue');
 
         return pubPayload
     } catch (error) {
@@ -207,10 +219,13 @@ export const clearCart = async (userId) => {
         const cart_key = `${CART_PREFIX}${userId}`;
         const ts = Date.now().toString();
 
-        const res = await redisClient.eval(luaClearCart, {
+        const client = await redisClient();
+        const res = await client.eval(luaClearCart, {
             keys: [cart_key],
             arguments: [ ts ]
         });
+
+        console.log('-----------clear cart in redis');
 
         if (res === "NO_CART") {
             console.log(`[clearCart] No cart exists for user ${userId}`);
@@ -225,11 +240,16 @@ export const clearCart = async (userId) => {
             updatedAt: ts
         };
 
-        await redisPub.publish(pubChannel, JSON.stringify(pubPayload));
+        const pubClient = await redisPub();
+        await pubClient.publish(pubChannel, JSON.stringify(pubPayload));
+
+        console.log('-----------clear cart redis pub sub');
 
         //emit directly to this connection for faster response
         const io = getIO();
         io.to(`user:${userId}`).emit('cart:update', pubPayload);
+
+        console.log('-----------clear cart redis pub sub io');
 
         //clear cart using mq
         const data = {
@@ -238,7 +258,6 @@ export const clearCart = async (userId) => {
         }
 
         const jobOptions = {
-            jobId: `persistCart:${userId}`,
             attempts: 10,
             backoff: { type: "exponential", delay: 1000 },
             priority: 1,
@@ -251,6 +270,8 @@ export const clearCart = async (userId) => {
             data,
             jobOptions
         );
+
+        console.log('-----------pushed clear cart job in queue');
 
         return pubPayload
     } catch (error) {

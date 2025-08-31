@@ -26,13 +26,16 @@ const getCartVersion = async (userId) => {
 }
 
 
-const fullCartSync = async (userId, dbVersion) => {
+const fullCartSync = async (userId) => {
     const cart_key = `cart:user:${userId}`;
-
     const client = await redisClient();
     const redisCart = await client.json.get(cart_key, { path: "$" });
 
     console.log(redisCart);
+
+    // redis returns array 
+    const snapshot = redisCart[0]; // JSON.GET "$" returns array
+    const {version, totalAmount, updatedAt, ...items} = snapshot;
 
     // if no item in redis cart
     if (!redisCart || redisCart.length === 0) {
@@ -45,17 +48,13 @@ const fullCartSync = async (userId, dbVersion) => {
                 }),
                 db.cart.update({
                     where: { id: cart.id },
-                    data: { version: dbVersion }
+                    data: { version: version }
                 })
             ]);
         }
-        console.log(`[fullCartSync] Cleared DB cart for user ${userId} -> v${dbVersion}`);
+        console.log(`[fullCartSync] Cleared DB cart for user ${userId} -> v${version}`);
         return;
     }
-    
-    // redis returns array 
-    const snapshot = redisCart[0]; // JSON.GET "$" returns array
-    const {version, totalAmount, updatedAt, ...items} = snapshot;
 
     await db.$transaction(async (tx) => {
         //upsert cart
@@ -94,7 +93,7 @@ export const persistCartAdd = async ({ userId, bookId, quantity }) => {
     }
 
     // Skip outdated job (important for retries/out-of-order)
-    if (cart.version > redisVersion) {
+    if (cart.version >= redisVersion) {
         console.log(
             `[persistCartAdd] Skip outdated job for user ${userId}: incoming v${redisVersion} < DB v${cart.version}`
         );
@@ -105,7 +104,7 @@ export const persistCartAdd = async ({ userId, bookId, quantity }) => {
 
     if (cart.version !== redisVersion - 1) {
         // Out of sync → full sync
-        await fullCartSync(userId, redisVersion);
+        await fullCartSync(userId);
         return
     }
 
@@ -137,24 +136,25 @@ export const persistCartRemove = async ({ userId, bookId }) => {
     const cart = await db.cart.findUnique({ where: { userId } });
 
     // Skip outdated job (important for retries/out-of-order)
-    if (cart.version > redisVersion) {
+    if (cart.version >= redisVersion) {
         console.log(`[persistCartRemove] Skip outdated job for user ${userId}: incoming v${redisVersion} < DB v${cart.version}`);
         return;
     }
 
     if (cart.version !== redisVersion - 1) {
-        await fullCartSync(userId, redisVersion);
+        await fullCartSync(userId);
         return;
     }
 
-    await db.cartItem.delete({
-        where: { cartId_bookId: { cartId: cart.id, bookId } }
-    });
-
-    await db.cart.update({
-        where: { id: cart.id },
-        data: { version: redisVersion }
-    });
+    await db.$transaction([
+        db.cartItem.delete({
+            where: { cartId_bookId: { cartId: cart.id, bookId } }
+        }),    
+        db.cart.update({
+            where: { id: cart.id },
+            data: { version: redisVersion }
+        })
+    ]);
 
     console.log(`[persistCartRemove] done for user ${userId} -> v${redisVersion}`)
 }
@@ -166,24 +166,26 @@ export const persistCartClear = async ({ userId }) => {
     const cart = await db.cart.findUnique({ where: { userId } });
 
     // Skip outdated job (important for retries/out-of-order)
-    if (cart.version > redisVersion) {
+    if (cart.version >= redisVersion) {
         console.log(`[persistCartRemove] Skip outdated job for user ${userId}: incoming v${version} < DB v${cart.version}`);
         return;
     }
 
     if (cart.version !== redisVersion - 1) {
-        await fullCartSync(userId, redisVersion);
+        await fullCartSync(userId);
         return;
     }
 
-    await db.cartItem.deleteMany({
-        where: { cartId: cart.id }
-    });
+    await db.$transaction([
+        db.cartItem.deleteMany({
+            where: { cartId: cart.id }
+        }),
+        db.cart.update({
+            where: { id: cart.id },
+            data: { version: redisVersion }
+        })
+    ]);
+    
 
-    await db.cart.update({
-        where: { id: cart.id },
-        data: { version: redisVersion }
-    });
-
-    console.log(`[persistCartClear] done for user ${userId} -> v${version}`)
+    console.log(`[persistCartClear] done for user ${userId} -> v${redisVersion}`)
 }
