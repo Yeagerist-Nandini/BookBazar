@@ -10,10 +10,7 @@ import { updateOrderStatus, createOrder } from "../services/order.service.js"
 
 //TODO: validation
 export const createOrder = asyncHandler(async(req, res) => {
-    const { userId } = req.user;
     
-    const order = await createOrder(userId, req.body);
-
     return res
             .status(200)
             .json(new ApiResponse(200, order, "Order created successfully!"))

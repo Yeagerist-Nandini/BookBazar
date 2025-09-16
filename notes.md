@@ -14,9 +14,7 @@
 
 # Target end of Sept
 ----------------------------------------------------------------------------
-## get total amount 
-- get redis '$.totalAmount' by using lua
-- update it in 5. mq job and update it in DB cart 
+## get total amount  
 
 ## get cart 
 - get it from redis
