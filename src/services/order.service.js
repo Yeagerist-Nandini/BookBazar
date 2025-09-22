@@ -3,6 +3,8 @@ import { db } from "../utils/db";
 import redisClient from "../utils/redisClient";
 
 const CART_PREFIX = "cart:user:";
+const RESERVATION_TTL = 15 * 60; //15 min 
+const RESERVATION_LUA = fs.readfileSync();
 
 
 export const createOrder = async(userId) => {
@@ -53,7 +55,7 @@ export const createOrder = async(userId) => {
 
             if(book.stock < item.quantity){
                 //TODO: update quantity in redis
-                throw new ApiError(400, "book out of stock");
+                throw new ApiError(400, `book ${book.id} out of stock`);
             }
 
             if(book.price != item.price){
@@ -84,11 +86,28 @@ export const createOrder = async(userId) => {
         });
 
         //5. Reserve stock via Lua script
-        await redis_client.eval();
+        const stockKeys = items.map(item => `stock:${item.bookId}`);
+        const luaArgs = items.map(item => item.quantity.toString());
+        luaArgs.push(RESERVATION_TTL.toString());
+        luaArgs.push(order.id);
+
+        const luaScript = fs.readfileSync('src/lua/reserveStock.lua','utf-8');
+        const result = await redis_client.eval(luaScript, {
+            keys: stockKeys,
+            arguments: luaArgs
+        });
+
+        if(result){
+            throw new ApiError(`Insufficient stock for `);
+        }
 
         //6. store reservation data + ttl in redis
 
         //7. update payment status -> pending
+        await db.order.update({
+            where: { id: order.id},
+            data: { status: "PAYMENT_PENDING" }
+        });
 
         //8. Enqueue reservation expiry job
 
@@ -98,4 +117,9 @@ export const createOrder = async(userId) => {
     } catch (error) {
         throw new ApiError(500, "Error while creating order", error);
     }
+}
+
+
+export const failOrder = async() => {
+
 }
