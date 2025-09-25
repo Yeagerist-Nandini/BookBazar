@@ -8,7 +8,7 @@ const CART_PREFIX = "cart:user:";
 const RESERVATION_TTL = 15 * 60; //15 min 
 
 
-export const createOrder = async (userId) => {
+export const createOrderService = async (userId) => {
     try {
         //1. Load cart from redis 
         const cart_key = `${CART_PREFIX}${userId}`;

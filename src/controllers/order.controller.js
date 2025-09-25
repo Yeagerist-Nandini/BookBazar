@@ -2,7 +2,7 @@ import { ApiError } from "../utils/api-error";
 import { ApiResponse } from "../utils/api-response";
 import { asyncHandler } from "../utils/asyncHandler";
 import { db } from "../utils/db";
-import { updateOrderStatus, createOrder } from "../services/order.service.js"
+import { updateOrderStatus, createOrderService } from "../services/order.service.js"
 
 //first cart -> checkout -> create order -> payment
 // if payment failed -> then order status cancelled
@@ -10,6 +10,13 @@ import { updateOrderStatus, createOrder } from "../services/order.service.js"
 
 //TODO: validation
 export const createOrder = asyncHandler(async(req, res) => {
+    const userId = req.user.id;
+
+    const {orderId, totalAmount} = await createOrderService(userId);
+
+    const order = await db.order.findUnique({
+        where: { id: orderId}
+    });
     
     return res
             .status(200)
