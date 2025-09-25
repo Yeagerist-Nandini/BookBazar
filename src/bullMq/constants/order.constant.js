@@ -1,3 +1,3 @@
 export const RESERVATION_QUEUE = "reservationQueue";
-
-export const ORDER_QUEUE = 'orderQueue';
+export const FULFILLMENT_QUEUE = "fulfillmentQueue";
+export const NOTIFY_QUEUE = "notifyQueue";

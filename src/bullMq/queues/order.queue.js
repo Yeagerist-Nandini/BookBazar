@@ -1,13 +1,16 @@
 import { Queue } from "bullmq";
-import { bullConnection } from "../bullmq";
-import { RESERVATION_QUEUE, ORDER_QUEUE } from "../constants/order.constant";
-
-
-export const orderQueue = new Queue(ORDER_QUEUE, { 
-    connection: bullConnection,
-})
+import { bullConnection } from "../bullmq.js";
+import { RESERVATION_QUEUE, ORDER_QUEUE, NOTIFY_QUEUE, FULFILLMENT_QUEUE } from "../constants/order.constant.js";
 
 export const reservationQueue = new Queue(RESERVATION_QUEUE, {
     connection: bullConnection, 
     
 })
+
+export const fulfillmentQueue = new Queue(FULFILLMENT_QUEUE, { 
+    connection: bullConnection 
+});
+
+export const notifyQueue = new Queue(NOTIFY_QUEUE, { 
+    connection: bullConnection 
+});
