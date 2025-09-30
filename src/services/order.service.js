@@ -103,6 +103,9 @@ export const createOrderService = async (userId) => {
             throw new ApiError(`Insufficient stock for ${bookKey}`);
         }
 
+        // If order expires (if order didn't get placed in 15 mins)
+        // we can enqueue a job which will check the order status after 15 mins 
+
         //6. update payment status -> pending
         await db.order.update({
             where: { id: order.id },
