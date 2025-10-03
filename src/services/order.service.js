@@ -1,3 +1,4 @@
+import fs from "fs";
 import { ApiError } from "../utils/api-error.js";
 import { db } from "../utils/db.js";
 import redisClient from "../utils/redisClient.js";

@@ -26,6 +26,7 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+  EXPIRED
 }
 
 enum PaymentStatus {
@@ -103,6 +104,8 @@ model Order {
   totalAmount Decimal
   status      OrderStatus @default(PENDING)
 
+  paymentIntentId String? //payment_intent ID
+
   createAt  DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -154,6 +157,8 @@ model Payment {
   orderId       String
   paymentStatus PaymentStatus
   transactionId String?       @unique
+  amount          Decimal?
+  currency        String?
 
   createAt  DateTime @default(now())
   updatedAt DateTime @updatedAt

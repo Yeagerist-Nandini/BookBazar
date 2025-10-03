@@ -3,6 +3,7 @@ import dotenv from "dotenv"
 import cookieParser from "cookie-parser";
 import healthCheckRouter from "./routes/healthcheck.route.js"
 import cartRouter from "./routes/cart.route.js";
+import paymentRouter from "./routes/payment.route.js"
 
 dotenv.config(); 
 
@@ -19,6 +20,7 @@ app.use(express.urlencoded({extended: true}));
 
 app.use("/api/v1",healthCheckRouter);
 app.use("/api/v1", cartRouter);
+app.use("/api/v1", paymentRouter);
 
 export default app;
 
