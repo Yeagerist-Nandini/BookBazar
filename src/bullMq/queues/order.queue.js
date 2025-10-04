@@ -7,9 +7,6 @@ export const reservationQueue = new Queue(RESERVATION_QUEUE, {
     
 })
 
-export const fulfillmentQueue = new Queue(FULFILLMENT_QUEUE, { 
-    connection: bullConnection 
-});
 
 export const notifyQueue = new Queue(NOTIFY_QUEUE, { 
     connection: bullConnection 

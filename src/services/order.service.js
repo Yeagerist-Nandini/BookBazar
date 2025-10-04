@@ -148,8 +148,3 @@ export const createOrderService = async (userId) => {
         throw new ApiError(500, "Error while creating order", error);
     }
 }
-
-
-export const failOrder = async () => {
-
-}

@@ -4,7 +4,7 @@ import { ApiError } from "../utils/api-error.js"
 import { db } from "../utils/db.js"
 import dotenv from "dotenv"
 import redisClient from "../utils/redisClient.js";
-import { reservationQueue } from "../bullMq/queues/order.queue.js";
+import { notifyQueue, reservationQueue } from "../bullMq/queues/order.queue.js";
 
 dotenv.config();
 
@@ -141,11 +141,22 @@ const handleSuccesfullPayment = async(orderId) => {
         await tx.payment.update({ where: {id: order.payment.id }, data: { paymentStatus: "SUCCESS" }});
     });
 
-    //4. enqueue fulfillment & notification
-    await reservationQueue.add('fulfillment', {orderId});
-    await reservationQueue.add('notify', { orderId, type: 'order.paid' });
+    //4. Finalize stock reservation
+    const redis_client = await redisClient();
+    const keyExists = redis_client.exists(`resv:${orderId}`);
 
-    //5. publish WS event
+    if(keyExists){
+        await redis_client.del(`resv:${orderId}`);
+    }
+
+    //5. enqueue notification job
+    await notifyQueue.add(
+        'notify', 
+        { orderId, type: 'order.paid' },
+        { removeOnComplete: true, removeOnFail: false }
+    );
+
+    //6. publish WS event
     orderEventsPublisher.publish(order.userId, 'order.paid', {
         orderId,
         totalAmount: order.totalAmount,
@@ -183,7 +194,7 @@ const handleFailedPayment = async(orderId) => {
     //4. Release stock
     const redis_client = await redisClient();
 
-    const releaseStockScript = fs.readFileSync('src/lua/releaseStock.lua', 'utf-8');
+    const releaseStockScript = fs.readFileSync('src/lua/releaseReservation.lua', 'utf-8');
     await redis_client.eval({
         releaseStockScript,
         keys: [`resv:${orderId}`],

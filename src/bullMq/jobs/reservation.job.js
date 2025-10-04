@@ -6,6 +6,7 @@ export const handleReservationExpire = async(orderId) => {
     const redis_client = await redisClient();
 
     try {
+        //1. fetch order
         const order = await db.order.findUnique({
             where: { id: orderId },
             select: { status: true }
@@ -17,14 +18,14 @@ export const handleReservationExpire = async(orderId) => {
 
         //2. if order already paid/cancelled -> skip
         if (order.status !== "PENDING" && order.status !== "PAYMENT_PENDING"){
-            console.log(`Order ${orderId} already processed iwth status ${order.status}`);
+            console.log(`Order ${orderId} already processed with status ${order.status}`);
             return;
         }
 
         //3. Expire order in DB
         await prisma.order.update({
             where: { id: orderId },
-            data: { status: "CANCELLED" },
+            data: { status: "EXPIRED" },
         });
 
         //4. Release reserved stock via lua
@@ -44,13 +45,4 @@ export const handleReservationExpire = async(orderId) => {
         console.error("Error in reservation expiry job", err);
         throw new ApiError(500, "Error while handling reservation expiry");
     }
-}
-
-
-export const failedOrder = () => {
-
-}
-
-export const cancelledOrder = () => {
-
 }

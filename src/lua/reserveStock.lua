@@ -30,7 +30,7 @@ end
 
 
 redis.set(resvKey, cjson.encode(resvData))
-redis.call("EXPIRE", resvKey, ttl)
+-- redis.call("EXPIRE", resvKey, ttl)
 
 return "DONE"
 
