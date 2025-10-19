@@ -162,10 +162,6 @@ export const deleteBook = asyncHandler(async(req, res) => {
             .json(new ApiResponse(200, deletedBook, "Book deleted successfully!")); 
 })
 
-export const getBookbyRatings = asyncHandler(async(req, res) => {
-    
-})
-
 
 // Input validation – Use Zod/Joi/Yup for req.body and req.params.
 

@@ -12,7 +12,7 @@ end
 -- parse reservation data and increment stock
 local items = cjson.decode(resv_data)
 
-for i=1,item in ipairs(items) do
+for i,item in ipairs(items) do
     local qty = tonumber(item.qty)
     local stock_key = item.bookId
 

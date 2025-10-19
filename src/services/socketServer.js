@@ -53,7 +53,7 @@ export const createSocketServer = async({port}) => {
             // const token = socket.request.cookies.accessToken;
             if(!token) return next(new ApiError(400, "Authentication Error ws"))
 
-            const payload = jwt.verify(token, process.env.ACCESS_TOKEN_REQUEST);
+            const payload = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
             socket.userId = payload.id;
 
             return next();

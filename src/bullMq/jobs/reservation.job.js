@@ -23,13 +23,13 @@ export const handleReservationExpire = async(orderId) => {
         }
 
         //3. Expire order in DB
-        await prisma.order.update({
+        await db.order.update({
             where: { id: orderId },
             data: { status: "EXPIRED" },
         });
 
         //4. Release reserved stock via lua
-        const luaScript = fs.readfileSync('src/lua/releaseReservation.lua', 'utf-8');
+        const luaScript = fs.readFileSync('src/lua/releaseReservation.lua', 'utf-8');
         const result = await redis_client.eval(luaScript,{
             keys: [],
             arguments: [orderId],
@@ -42,7 +42,7 @@ export const handleReservationExpire = async(orderId) => {
 
         console.log(`Order ${orderId} expired & stock released`);
     } catch (error) {
-        console.error("Error in reservation expiry job", err);
+        console.error("Error in reservation expiry job", error);
         throw new ApiError(500, "Error while handling reservation expiry");
     }
 }

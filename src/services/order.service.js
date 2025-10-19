@@ -6,7 +6,7 @@ import redisClient from "../utils/redisClient.js";
 import { reservationQueue } from "../bullMq/queues/order.queue.js"
 
 const CART_PREFIX = "cart:user:";
-const RESERVATION_TTL = 15 * 60; //15 min 
+const RESERVATION_TTL = 30 * 60; //30 min 
 
 
 export const createOrderService = async (userId) => {
@@ -18,7 +18,7 @@ export const createOrderService = async (userId) => {
         let cart_data = await redis_client.json.get(cart_key);
         cart_data = cart_data[0];
 
-        if (!cart_data || Object.keys(cart).length === 0)
+        if (!cart_data || Object.keys(cart_data).length === 0)
             throw new ApiError(400, 'Cart Empty');
 
         //2. extract cart items
@@ -93,7 +93,7 @@ export const createOrderService = async (userId) => {
         luaArgs.push(RESERVATION_TTL.toString());
         luaArgs.push(order.id);
 
-        const luaScript = fs.readfileSync('src/lua/reserveStock.lua', 'utf-8');
+        const luaScript = fs.readFileSync('src/lua/reserveStock.lua', 'utf-8');
         const result = await redis_client.eval(luaScript, {
             keys: stockKeys,
             arguments: luaArgs
@@ -115,7 +115,7 @@ export const createOrderService = async (userId) => {
 
         //7. Enqueue reservation expiry job
         const jobOptions = {
-            delay: RESERVATION_TTL * 1000,
+            delay: 15 * 60 * 1000,  //15 mins
             attempts: 3
         }
 
@@ -141,7 +141,7 @@ export const createOrderService = async (userId) => {
             expiresAt: Date.now() + RESERVATION_TTL * 1000
         };
 
-        io.to(`user:${userId}`).emit("order:update", eventPayload);
+        io.to(`user:${userId}`).emit("order:created", eventPayload);
 
         return { orderId: order.id, totalAmount };
     } catch (error) {
