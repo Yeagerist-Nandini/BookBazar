@@ -11,8 +11,9 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 export const initPayment = asyncHandler(async (req, res) => {
     const { orderId } = req.body;
     const idempotencyKey = `order_${orderId}`;
+    const userId = req.user.id;
 
-    const result = await createPaymentIntent({ orderId, idempotencyKey });
+    const result = await createPaymentIntent({ orderId, idempotencyKey, userId });
 
     return res
         .status(200)
@@ -22,7 +23,7 @@ export const initPayment = asyncHandler(async (req, res) => {
 
 /**
  * POST /payments/webhook
- * IMPORTANT: This endpoint must use raw body. See Express setup below.
+ * IMPORTANT: This endpoint must use raw body.
  * Stripe calls this when payment intent status changes. We verify signature, parse event, act idempotently.
  */
 export const webhookHandler = asyncHandler(async (req, res) => {

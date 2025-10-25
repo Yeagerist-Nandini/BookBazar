@@ -1,6 +1,6 @@
 import { Worker } from "bullmq";
 import { NOTIFY_QUEUE } from "../constants/order.constant.js";
-import { handleJobNotify } from "../jobs/notify.job.js";
+import { handleNotifyJob } from "../jobs/notify.job.js";
 
 const workerOptions = {
     connection: bullConnection
@@ -9,7 +9,7 @@ const workerOptions = {
 export const notifyWorker = new Worker(
     NOTIFY_QUEUE,
     async (job) => {
-        await handleJobNotify(job);
+        await handleNotifyJob(job);
     },
     workerOptions
 )

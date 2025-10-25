@@ -84,16 +84,41 @@ const forgotPasswordMailgenContent = (username, resetPasswordUrl) => {
     }
 }
 
-const paymentCompleteMailgenContent = () => {
-
+const paymentFailedMailgenContent = (username, orderId) => {
+    return {
+        body: {
+            name: username,
+            intro: 'Payment Failed!',
+            action: {
+                instructions: `Your payment for order ${orderId} failed`,
+            },
+            outro: 'Need help, or have questions? Just reply to this email, we\'d love to help.'
+        }
+    }
 }
 
-const purchaseSuccessfullMailContent = () => {
-
+const purchaseSuccessfullMailContent = (username, orderLink) => {
+    return {
+        body: {
+            name: username,
+            intro: 'Payment Successfull! Your order has been processed successfully.',
+            action: {
+                instructions: 'You can check the status of your order and more in your order :',
+                button: {
+                    color: '#22BC66', // Optional action button color
+                    text: 'View Your Order',
+                    link: orderLink
+                }
+            },
+            outro: 'We thank you for your purchase.\n Need help, or have questions? Just reply to this email, we\'d love to help.'
+        }
+    }
 }
 
 export {
     sendMail,
     forgotPasswordMailgenContent,
-    emailVerificationMailgenContent
+    emailVerificationMailgenContent,
+    purchaseSuccessfullMailContent,
+    paymentFailedMailgenContent,
 }

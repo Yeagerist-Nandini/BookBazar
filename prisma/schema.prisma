@@ -155,7 +155,7 @@ model CartItem {
 model Payment {
   id            String        @id @default(uuid())
   orderId       String
-  paymentStatus PaymentStatus
+  paymentStatus PaymentStatus @default(PENDING)
   transactionId String?       @unique
   amount          Decimal?
   currency        String?

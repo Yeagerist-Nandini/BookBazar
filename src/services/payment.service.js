@@ -4,7 +4,7 @@ import { ApiError } from "../utils/api-error.js"
 import { db } from "../utils/db.js"
 import dotenv from "dotenv"
 import redisClient from "../utils/redisClient.js";
-import { notifyQueue, reservationQueue } from "../bullMq/queues/order.queue.js";
+import { notifyQueue } from "../bullMq/queues/order.queue.js";
 
 dotenv.config();
 
@@ -16,7 +16,7 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET; // set in env from Stri
 /**
  * Create a Stripe Payment Intent for the given order.
  */
-export const createPaymentIntent = async({orderId, idempotencyKey}) => {
+export const createPaymentIntent = async({orderId, idempotencyKey, userId}) => {
     //1. load order
     const order = await db.order.findUnique({ where: {orderId} });
 
@@ -152,7 +152,7 @@ const handleSuccesfullPayment = async(orderId) => {
     //5. enqueue notification job
     await notifyQueue.add(
         'notify', 
-        { orderId, type: 'order.paid' },
+        { orderId, type: 'order:paid' },
         { removeOnComplete: true, removeOnFail: false }
     );
 
@@ -181,7 +181,7 @@ const handleFailedPayment = async(orderId) => {
 
     //2. idempotent: multiple reqs 
     if(order.payment.paymentStatus === "FAILED"){
-        console.log(`Order ${orderId} already marked as PAID`);
+        console.log(`Order ${orderId} already marked as FAILED`);
         return;
     }
 
@@ -200,9 +200,16 @@ const handleFailedPayment = async(orderId) => {
         keys: [`resv:${orderId}`],
         arguments: [orderId]
     });
+    
+    //5. enqueue notification job
+    await notifyQueue.add(
+        'notify', 
+        { orderId, type: 'order:payment:failed' },
+        { removeOnComplete: true, removeOnFail: false }
+    );
 
-    //5. Publish WS event 
-    orderEventsPublisher.publish(order.userId, 'order.payment_failed', {
+    //6. Publish WS event 
+    orderEventsPublisher.publish(order.userId, 'order:payment_failed', {
         orderId,
     });
 
